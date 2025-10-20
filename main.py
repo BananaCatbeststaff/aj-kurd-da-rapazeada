@@ -1,9 +1,9 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-app = FastAPI()
+app = FastAPI(title="Railway JSON API")
 
-# "Banco de dados" simples em memória
+# "Banco de dados" em memória (zerado a cada restart)
 data_store = []
 
 @app.get("/")
@@ -19,6 +19,12 @@ async def post_data(request: Request):
     try:
         body = await request.json()
         data_store.append(body)
-        return JSONResponse(content={"status": "success", "received": body}, status_code=201)
+        return JSONResponse(
+            content={"status": "success", "received": body},
+            status_code=201
+        )
     except Exception as e:
-        return JSONResponse(content={"status": "error", "detail": str(e)}, status_code=400)
+        return JSONResponse(
+            content={"status": "error", "detail": str(e)},
+            status_code=400
+        )
