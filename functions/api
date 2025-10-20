@@ -1,14 +1,14 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from mangum import Mangum  # necessário para rodar FastAPI em Netlify Lambda
 
-app = FastAPI(title="Railway JSON API")
+app = FastAPI(title="Netlify JSON API")
 
-# "Banco de dados" em memória (zerado a cada restart)
-data_store = []
+data_store = []  # memória temporária
 
 @app.get("/")
 async def root():
-    return {"message": "API online ✅ - use /data para GET e POST"}
+    return {"message": "API online ✅ - use /api/data para GET e POST"}
 
 @app.get("/data")
 async def get_data():
@@ -28,3 +28,6 @@ async def post_data(request: Request):
             content={"status": "error", "detail": str(e)},
             status_code=400
         )
+
+# Adaptador para rodar no ambiente Netlify (AWS Lambda)
+handler = Mangum(app)
