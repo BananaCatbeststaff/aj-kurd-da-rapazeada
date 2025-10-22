@@ -4,7 +4,7 @@
     { "src": "main.py", "use": "@vercel/python" }
   ],
   "routes": [
-    { "src": "/get-job", "dest": "main.py" },
+    { "src": "/get-job", "dest": "get-job.py" },
     { "src": "/1M", "dest": "main.py" },
     { "src": "/5M", "dest": "main.py" },
     { "src": "/10M", "dest": "main.py" },
