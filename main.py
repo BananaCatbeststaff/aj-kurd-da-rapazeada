@@ -73,6 +73,7 @@ async def update_job_pool():
                 if "data" in data_json:
                     current_jobs = [server["id"] for server in data_json["data"]]
                     job_pool = list(set(current_jobs) | set(job_pool))
+                    print(f"[JobPool] Atualizada: {len(job_pool)} jobs disponíveis")
         except Exception as e:
             print("Erro ao atualizar job_pool:", e)
         await asyncio.sleep(POOL_REFRESH_INTERVAL)
@@ -81,3 +82,4 @@ async def update_job_pool():
 @app.on_event("startup")
 async def startup_event():
     asyncio.create_task(update_job_pool())
+    print("[Startup] Loop de atualização de job_pool iniciado.")
