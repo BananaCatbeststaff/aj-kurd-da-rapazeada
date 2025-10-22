@@ -1,15 +1,17 @@
 {
   "version": 2,
   "builds": [
-    {
-      "src": "main.py",
-      "use": "@vercel/python",
-    }
+    { "src": "main.py", "use": "@vercel/python" },
+    { "src": "get_job.py", "use": "@vercel/python" }
   ],
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "main.py"
-    }
+    { "src": "/get-job", "dest": "get_job.py" },
+    { "src": "/1M", "dest": "main.py" },
+    { "src": "/5M", "dest": "main.py" },
+    { "src": "/10M", "dest": "main.py" },
+    { "src": "/50M", "dest": "main.py" },
+    { "src": "/100M", "dest": "main.py" },
+    { "src": "/300M", "dest": "main.py" },
+    { "src": "/", "dest": "main.py" }
   ]
 }
