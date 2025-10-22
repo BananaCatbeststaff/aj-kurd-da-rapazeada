@@ -9,7 +9,7 @@ from threading import Thread
 app = FastAPI()
 
 # ====== Configurações ======
-PLACE_ID = 12345678  # Coloque aqui o ID do seu jogo Roblox
+PLACE_ID = 109983668079237  # Coloque aqui o ID do seu jogo Roblox
 POOL_REFRESH_INTERVAL = 10  # Intervalo em segundos para atualizar job_pool
 job_pool = []  # Lista global de job_ids
 
