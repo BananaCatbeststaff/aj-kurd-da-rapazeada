@@ -1,13 +1,17 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-import asyncio
-import httpx
+import asyncio, httpx
 from random import choice
 
 app = FastAPI()
 
-# ====== Estrutura de blocos em memória ======
+# ====== Configurações ======
+PLACE_ID = "109983668079237"  # substitua pelo seu PlaceID
+POOL_REFRESH_INTERVAL = 30  # segundos entre atualizações do job_pool
+job_pool = []  # pool de Job IDs
+
+# Estrutura inicial dos blocos
 data = {
     "1M": [],
     "5M": [],
@@ -17,19 +21,15 @@ data = {
     "300M": []
 }
 
-job_pool = []
-PLACE_ID = "109983668079237"  # coloque seu PlaceId
-POOL_REFRESH_INTERVAL = 10  # segundos entre atualizações do job_pool
-
-# ====== Modelo dos dados ======
+# Modelo de entrada para POST
 class BlockData(BaseModel):
     Name: str
     Gen: str
     Traits: str
     Mutation: str
-    JobId: str | None = None  # JobId opcional
+    JobId: str  # adiciona JobId ao payload
 
-# ====== Rotas da API ======
+# ====== Rotas GET ======
 @app.get("/")
 def get_all():
     return data
@@ -40,6 +40,7 @@ def get_tier(tier: str):
         return {"error": "Bloco não encontrado"}
     return data[tier]
 
+# ====== Rota POST ======
 @app.post("/{tier}")
 def add_entry(tier: str, item: BlockData):
     if tier not in data:
@@ -47,7 +48,7 @@ def add_entry(tier: str, item: BlockData):
     data[tier].append(item.dict())
     return {"status": "added", "tier": tier, "entry": item.dict()}
 
-# ====== Rota GET /get-job ======
+# ====== GET JOB ======
 @app.get("/get-job")
 async def get_job():
     global job_pool
@@ -57,7 +58,7 @@ async def get_job():
     job_pool.remove(job_id)
     return JSONResponse({"job_id": job_id})
 
-# ====== Atualização automática do job_pool ======
+# ====== Atualização automática do pool de servidores ======
 async def update_job_pool():
     global job_pool
     while True:
@@ -66,16 +67,13 @@ async def update_job_pool():
                 url = f"https://games.roblox.com/v1/games/{PLACE_ID}/servers/Public?sortOrder=Asc&limit=100"
                 r = await client.get(url)
                 r.raise_for_status()
-                resp_data = r.json()
-                if "data" in resp_data:
-                    current_jobs = [server["id"] for server in resp_data["data"]]
-                    # combina novos jobs com os já existentes (sem duplicatas)
+                result = r.json()
+                if "data" in result:
+                    current_jobs = [server["id"] for server in result["data"] if server["playing"] < server["maxPlayers"]]
                     job_pool = list(set(current_jobs) | set(job_pool))
         except Exception as e:
             print("Erro ao atualizar job_pool:", e)
         await asyncio.sleep(POOL_REFRESH_INTERVAL)
 
-# ====== Inicializa o update do job_pool ======
-@app.on_event("startup")
-async def startup_event():
-    asyncio.create_task(update_job_pool())
+# ====== Inicializa atualização automática ======
+asyncio.create_task(update_job_pool())
