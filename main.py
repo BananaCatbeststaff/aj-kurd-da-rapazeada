@@ -27,8 +27,6 @@ data = {
 class BlockData(BaseModel):
     Name: str
     Gen: str
-    Traits: str
-    Mutation: str
     JobId: str
 
 # ====== Rotas API ======
@@ -47,22 +45,18 @@ def get_tier(tier: str):
 
 @app.post("/{tier}")
 def add_entry(tier: str, item: BlockData):
-    """Adiciona uma nova entrada a um tier, guardando apenas Name, Gen e JobId"""
+    """Adiciona uma nova entrada a um tier, substituindo a anterior"""
     if tier not in data:
         return {"error": "Bloco inválido"}
-    
-    # Guarda apenas os campos desejados
-    filtered_item = {
-        "Name": item.Name,
-        "Gen": item.Gen,
-        "JobId": item.JobId
-    }
 
-    # Substitui qualquer bloco existente pelo novo
-    data[tier] = [filtered_item]
-    
-    print(f"[Nova entrada] {tier}: {filtered_item}")
-    return {"status": "added", "tier": tier, "entry": filtered_item}
+    # Cria a string formatada
+    entry_str = f"Name = {item.Name}, Gen = {item.Gen}, JobId = {item.JobId}"
+
+    # Substitui qualquer valor anterior com a nova string
+    data[tier] = [entry_str]
+
+    print(f"[Nova entrada] {tier}: {entry_str}")
+    return {"status": "added", "tier": tier, "entry": entry_str}
 
 @app.get("/api/get-job")
 def get_job():
