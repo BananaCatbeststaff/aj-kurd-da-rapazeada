@@ -9,7 +9,6 @@ from threading import Thread
 app = FastAPI()
 
 # ====== Configurações ======
-o = "o"
 PLACE_ID = 109983668079237  # ID do jogo Roblox
 POOL_REFRESH_INTERVAL = 60  # Intervalo (segundos) para atualizar job_pool
 job_pool = []  # Lista global de job_ids
@@ -30,7 +29,7 @@ class BlockData(BaseModel):
     Gen: str
     Traits: str
     Mutation: str
-    JobId: str  # Novo campo adicionado!
+    JobId: str
 
 # ====== Rotas API ======
 
@@ -48,16 +47,22 @@ def get_tier(tier: str):
 
 @app.post("/{tier}")
 def add_entry(tier: str, item: BlockData):
-    """Adiciona uma nova entrada a um tier, substituindo a anterior"""
+    """Adiciona uma nova entrada a um tier, guardando apenas Name, Gen e JobId"""
     if tier not in data:
         return {"error": "Bloco inválido"}
     
-    # Substitui qualquer bloco existente pelo novo
-    data[tier] = [item.dict()]  # <-- Mantém apenas o último bloco
-    
-    print(f"[Nova entrada] {tier}: {item.dict()}")
-    return {"status": "added", "tier": tier, "entry": item.dict()}
+    # Guarda apenas os campos desejados
+    filtered_item = {
+        "Name": item.Name,
+        "Gen": item.Gen,
+        "JobId": item.JobId
+    }
 
+    # Substitui qualquer bloco existente pelo novo
+    data[tier] = [filtered_item]
+    
+    print(f"[Nova entrada] {tier}: {filtered_item}")
+    return {"status": "added", "tier": tier, "entry": filtered_item}
 
 @app.get("/api/get-job")
 def get_job():
