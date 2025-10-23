@@ -9,8 +9,8 @@ from threading import Thread
 app = FastAPI()
 
 # ====== Configurações ======
-PLACE_ID = 109983668079237  # Coloque aqui o ID do seu jogo Roblox
-POOL_REFRESH_INTERVAL = 60  # Intervalo em segundos para atualizar job_pool
+PLACE_ID = 109983668079237  # ID do jogo Roblox
+POOL_REFRESH_INTERVAL = 60  # Intervalo (segundos) para atualizar job_pool
 job_pool = []  # Lista global de job_ids
 
 # Estrutura inicial dos blocos em memória
@@ -23,33 +23,40 @@ data = {
     "300M": []
 }
 
+# ====== Modelo de entrada ======
 class BlockData(BaseModel):
     Name: str
     Gen: str
     Traits: str
     Mutation: str
+    JobId: str  # Novo campo adicionado!
 
 # ====== Rotas API ======
 
 @app.get("/")
 def get_all():
+    """Retorna todos os tiers com seus blocos"""
     return data
 
 @app.get("/{tier}")
 def get_tier(tier: str):
+    """Retorna os blocos de um tier específico"""
     if tier not in data:
         return {"error": "Bloco não encontrado"}
     return data[tier]
 
 @app.post("/{tier}")
 def add_entry(tier: str, item: BlockData):
+    """Adiciona uma nova entrada (com JobId) a um tier"""
     if tier not in data:
         return {"error": "Bloco inválido"}
     data[tier].append(item.dict())
+    print(f"[Nova entrada] {tier}: {item.dict()}")
     return {"status": "added", "tier": tier, "entry": item.dict()}
 
 @app.get("/api/get-job")
 def get_job():
+    """Retorna um job_id aleatório da pool"""
     global job_pool
     if not job_pool:
         return JSONResponse({"error": "Nenhum job_id disponível ainda"})
@@ -57,7 +64,7 @@ def get_job():
     job_pool.remove(job_id)
     return JSONResponse({"job_id": job_id})
 
-# ====== Atualização da job_pool com loop síncrono ======
+# ====== Atualização da job_pool (loop síncrono) ======
 def update_job_pool_loop():
     global job_pool
     while True:
@@ -66,6 +73,7 @@ def update_job_pool_loop():
             r = httpx.get(url)
             r.raise_for_status()
             data_json = r.json()
+
             if "data" in data_json:
                 current_jobs = [server["id"] for server in data_json["data"]]
                 job_pool = list(set(current_jobs) | set(job_pool))
