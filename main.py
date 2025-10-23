@@ -48,12 +48,16 @@ def get_tier(tier: str):
 
 @app.post("/{tier}")
 def add_entry(tier: str, item: BlockData):
-    """Adiciona uma nova entrada (com JobId) a um tier"""
+    """Adiciona uma nova entrada a um tier, substituindo a anterior"""
     if tier not in data:
         return {"error": "Bloco inválido"}
-    data[tier].append(item.dict())
+    
+    # Substitui qualquer bloco existente pelo novo
+    data[tier] = [item.dict()]  # <-- Mantém apenas o último bloco
+    
     print(f"[Nova entrada] {tier}: {item.dict()}")
     return {"status": "added", "tier": tier, "entry": item.dict()}
+
 
 @app.get("/api/get-job")
 def get_job():
