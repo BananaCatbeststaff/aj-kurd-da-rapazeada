@@ -11,17 +11,11 @@ app = FastAPI()
 # ====== Configurações ======
 PLACE_ID = 109983668079237  # ID do jogo Roblox
 POOL_REFRESH_INTERVAL = 60  # Intervalo (segundos) para atualizar job_pool
-job_pool = []  # Lista global de job_ids
+MAX_BLOCKS = 30             # Máximo de blocos armazenados
+job_pool = []               # Lista global de job_ids
 
-# Estrutura inicial dos blocos em memória
-data = {
-    "1M": [],
-    "5M": [],
-    "10M": [],
-    "50M": [],
-    "100M": [],
-    "300M": []
-}
+# Estrutura principal de blocos: lista única
+blocks = []
 
 # ====== Modelo de entrada ======
 class BlockData(BaseModel):
@@ -32,31 +26,29 @@ class BlockData(BaseModel):
 # ====== Rotas API ======
 
 @app.get("/")
-def get_all():
-    """Retorna todos os tiers com seus blocos"""
-    return data
+def get_all_blocks():
+    """Retorna todos os blocos armazenados"""
+    return {"blocks": blocks}
 
-@app.get("/{tier}")
-def get_tier(tier: str):
-    """Retorna os blocos de um tier específico"""
-    if tier not in data:
-        return {"error": "Bloco não encontrado"}
-    return data[tier]
-
-@app.post("/{tier}")
-def add_entry(tier: str, item: BlockData):
-    """Adiciona uma nova entrada a um tier, substituindo a anterior"""
-    if tier not in data:
-        return {"error": "Bloco inválido"}
-
-    # Cria a string formatada
+@app.post("/")
+def add_block(item: BlockData):
+    """Adiciona um novo bloco até o limite de 30"""
     entry_str = f"Name = {item.Name}, Gen = {item.Gen}, JobId = {item.JobId}"
 
-    # Substitui qualquer valor anterior com a nova string
-    data[tier] = [entry_str]
+    # Evita duplicatas
+    if entry_str in blocks:
+        return {"status": "ignored", "reason": "entrada duplicada"}
 
-    print(f"[Nova entrada] {tier}: {entry_str}")
-    return {"status": "added", "tier": tier, "entry": entry_str}
+    # Adiciona o novo bloco
+    blocks.append(entry_str)
+
+    # Mantém no máximo MAX_BLOCKS
+    if len(blocks) > MAX_BLOCKS:
+        removed = blocks.pop(0)
+        print(f"[Removido] {removed}")
+
+    print(f"[Nova entrada] {entry_str}")
+    return {"status": "added", "entry": entry_str, "total": len(blocks)}
 
 @app.get("/api/get-job")
 def get_job():
