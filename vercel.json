@@ -1,9 +1,15 @@
 {
-  "name": "jobdist",
-  "version": "1.0.0",
-  "main": "server.js",
-  "license": "MIT",
-  "dependencies": {
-    "express": "latest"
-  }
+  "version": 2,
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/server.js"
+    }
+  ]
 }
